@@ -1,0 +1,39 @@
+type User @table {
+  username: String!
+  email: String!
+  createdAt: Timestamp!
+  displayName: String
+  bio: String
+  profilePictureUrl: String
+}
+
+type Article @table {
+  title: String!
+  content: String!
+  publishedAt: Timestamp!
+  createdAt: Timestamp!
+  excerpt: String
+  imageUrl: String
+  updatedAt: Timestamp
+  author: User
+}
+
+type Topic @table {
+  name: String!
+  description: String
+}
+
+type ArticleTopic @table(key: ["article", "topic"]) {
+  article: Article!
+  topic: Topic!
+  createdAt: Timestamp!
+}
+
+type Comment @table {
+  content: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp
+  parentId: UUID
+  author: User
+  article: Article
+}

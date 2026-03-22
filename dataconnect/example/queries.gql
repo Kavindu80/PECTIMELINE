@@ -1,0 +1,54 @@
+query AllTopics @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  topics {
+    id
+    name
+    description
+  }
+}
+
+query GetArticleById($id: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  article(id: $id) {
+    id
+    title
+    content
+    publishedAt
+    author {
+      username
+      displayName
+    }
+    comments_on_article {
+      id
+      content
+      createdAt
+      author {
+        username
+      }
+    }
+    topics_via_ArticleTopic {
+      id
+      name
+    }
+  }
+}
+
+mutation CreateComment($articleId: UUID!, $content: String!) @auth(level: USER) {
+  comment_insert(
+    data: {
+      articleId: $articleId,
+      authorId_expr: "auth.uid",
+      content: $content,
+      createdAt_expr: "request.time"
+    }
+  ) {
+    id
+  }
+}
+
+query MyArticles @auth(level: USER) {
+  articles(where: {authorId: {eq_expr: "auth.uid"}}) {
+    id
+    title
+    publishedAt
+    excerpt
+  }
+}
