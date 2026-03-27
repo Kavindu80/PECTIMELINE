@@ -12,7 +12,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 import { Project, ProjectStatus, DeadlineStatus, Notification, SubFilterType } from './types';
 import { CATEGORIES, PLANTS } from './constants';
-import { fetchProjects, createProject, updateProject, deleteProject as deleteProjectFromDB, syncProjectSolutions, fetchAllSolutions } from './services/supabaseService';
+import { fetchProjects, createProject, updateProject, deleteProject as deleteProjectFromDB, syncProjectSolutions, fetchAllSolutions, updateSolution } from './services/supabaseService';
 import { needsPasswordChange } from './services/authService';
 import { supabase } from './services/supabaseClient';
 import { ProjectTable } from './components/ProjectTable';
@@ -440,41 +440,95 @@ const App: React.FC = () => {
   const projectsRef = React.useRef(projects);
   projectsRef.current = projects;
 
+  // Sync lock to prevent concurrent syncs from creating duplicates
+  const syncLockRef = React.useRef<Record<string, boolean>>({});
+  const pendingSyncRef = React.useRef<Record<string, Project>>({});
+
   const handleInlineUpdateProject = useCallback(async (updatedProject: Project) => {
     // 1. Immediately update local state maintaining original array position
     setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
 
-    // 2. Silently sync to Supabase in background
+    const projectId = updatedProject.id;
+
+    // If a sync is already in progress for this project, queue the latest update
+    if (syncLockRef.current[projectId]) {
+      pendingSyncRef.current[projectId] = updatedProject;
+      return;
+    }
+
+    // Acquire sync lock
+    syncLockRef.current[projectId] = true;
+
     try {
       // Read previous state from ref (always fresh) instead of stale closure
-      const previousProject = projectsRef.current.find(p => p.id === updatedProject.id);
+      const previousProject = projectsRef.current.find(p => p.id === projectId);
       const previousSolutions = previousProject?.solutions || [];
       const currentSolutions = updatedProject.solutions || [];
 
       // Update the project row in DB
-      await updateProject(updatedProject.id, updatedProject);
+      await updateProject(projectId, updatedProject);
 
-      // Sync solutions quietly and get back solutions with real DB UUIDs
-      const syncedSolutions = await syncProjectSolutions(updatedProject.id, currentSolutions, previousSolutions);
+      // Determine if we need full sync or targeted update
+      const previousIds = previousSolutions.map(s => s.id).sort();
+      const currentIds = currentSolutions.map(s => s.id).sort();
+      const hasNewSolutions = currentSolutions.some(s => s.id.startsWith('sol-') || s.id.startsWith('ck-') || s.id.startsWith('fl-'));
+      const hasDeletedSolutions = previousSolutions.some(prev => !prev.id.startsWith('sol-') && !currentIds.includes(prev.id));
+      const sameCount = previousIds.length === currentIds.length;
+      const sameIds = sameCount && previousIds.every((id, i) => id === currentIds[i]);
 
-      // 3. Apply synced solutions (with real DB IDs) back to local state
-      // This prevents sol-xxx local IDs from persisting and being re-created on next update
-      if (syncedSolutions && syncedSolutions.length > 0) {
-        const finalUpdatedProject = { ...updatedProject, solutions: syncedSolutions };
-        setProjects(prev => prev.map(p =>
-          p.id === updatedProject.id
-            ? finalUpdatedProject
-            : p
-        ));
+      let finalSolutions = currentSolutions;
 
-        // CRITICAL SYNC: Update viewingProject if it's the one being modified
-        setViewingProject(prev => prev?.id === updatedProject.id ? finalUpdatedProject : prev);
-      } else {
-        // Even if no solutions changed/synced, sync the viewing project for other field changes
-        setViewingProject(prev => prev?.id === updatedProject.id ? updatedProject : prev);
+      if (hasNewSolutions || hasDeletedSolutions) {
+        // Full sync needed — new or deleted solutions
+        const syncedSolutions = await syncProjectSolutions(projectId, currentSolutions, previousSolutions);
+        if (syncedSolutions && syncedSolutions.length > 0) {
+          finalSolutions = syncedSolutions;
+        }
+      } else if (sameIds && currentSolutions.length > 0) {
+        // Targeted update — only changed solution fields (status, team, dates, etc.)
+        // Find which solutions actually changed and update only those
+        const updatePromises: Promise<void>[] = [];
+        const mergedSolutions = [...currentSolutions];
+
+        for (let i = 0; i < currentSolutions.length; i++) {
+          const curr = currentSolutions[i];
+          const prev = previousSolutions.find(p => p.id === curr.id);
+          if (prev && JSON.stringify(prev) !== JSON.stringify(curr)) {
+            updatePromises.push(
+              updateSolution(curr.id, curr, projectId).then(updated => {
+                // Merge: keep our latest local fields on top of DB response
+                mergedSolutions[i] = { ...updated, team: curr.team, responsible: curr.responsible };
+              }).catch(err => {
+                console.error('Failed to update solution:', curr.id, err);
+              })
+            );
+          }
+        }
+
+        if (updatePromises.length > 0) {
+          await Promise.all(updatePromises);
+          finalSolutions = mergedSolutions;
+        }
       }
+
+      // Apply final state back
+      const finalProject = { ...updatedProject, solutions: finalSolutions };
+      setProjects(prev => prev.map(p => p.id === projectId ? finalProject : p));
+      setViewingProject(prev => prev?.id === projectId ? finalProject : prev);
+
     } catch (err) {
       console.error('Background sync failed (local state preserved):', err);
+    } finally {
+      // Release sync lock
+      syncLockRef.current[projectId] = false;
+
+      // Process any queued update
+      const pending = pendingSyncRef.current[projectId];
+      if (pending) {
+        delete pendingSyncRef.current[projectId];
+        // Re-run with the latest queued state
+        handleInlineUpdateProject(pending);
+      }
     }
   }, []);
 

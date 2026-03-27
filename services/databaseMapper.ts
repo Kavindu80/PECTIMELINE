@@ -137,6 +137,10 @@ export const projectToDatabase = (project: Partial<Project>): any => {
     stage_notes: rest.stageNotes,
     daily_notes: rest.dailyNotes,
     stage_comments: rest.stageComments,
+    cut_actuals: rest.cutActuals,
+    cut_kit_items: rest.cutKitItems,
+    stage_files: rest.stageFiles,
+    deadline_history: rest.deadlineHistory,
 
     // DATE fields — convert DD-MMM-YY to YYYY-MM-DD for PostgreSQL
     style_in_date: convertDisplayDateToISO(rest.styleInDate),

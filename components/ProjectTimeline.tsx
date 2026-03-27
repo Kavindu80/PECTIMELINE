@@ -440,16 +440,24 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
     const handleAddSolution = (project: Project) => {
         if (!newSolution.solutionText.trim()) return;
 
-        // Prevent rapid double-clicks (300ms cooldown)
+        // Prevent rapid double-clicks (1000ms cooldown — increased for Supabase sync time)
         const now = Date.now();
-        if (now - lastAddedRef.current < 300) return;
+        if (now - lastAddedRef.current < 1000) return;
         lastAddedRef.current = now;
 
-        // Prevent duplicate: check if solution with same text already exists
+        // Prevent duplicate: check if solution with same text already exists (trim + case-insensitive)
         const existingSolutions = project.solutions || [];
-        if (existingSolutions.some(s => s.solutionText.trim() === newSolution.solutionText.trim())) {
+        const newText = newSolution.solutionText.trim().toLowerCase();
+        if (existingSolutions.some(s => s.solutionText.trim().toLowerCase() === newText)) {
             setShowAddSolution(null);
             setNewSolution({ ...EMPTY_SOLUTION });
+            return;
+        }
+
+        // Also prevent duplicate by checking if any sol-* ID is still pending (not yet synced)
+        if (existingSolutions.some(s => s.id.startsWith('sol-'))) {
+            // A previous add hasn't been synced yet — skip to prevent double creation
+            console.warn('Previous solution still syncing, skipping add');
             return;
         }
 
@@ -458,13 +466,16 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
             id: `sol-${now}`,
             entryDate: newSolution.entryDate || formatToday(),
         };
+
+        // Reset form IMMEDIATELY before triggering update (prevents re-submission)
+        setNewSolution({ ...EMPTY_SOLUTION });
+        setShowAddSolution(null);
+
         const updatedProject = {
             ...project,
             solutions: [...existingSolutions, solution]
         };
         onUpdateProject?.(updatedProject);
-        setNewSolution({ ...EMPTY_SOLUTION });
-        setShowAddSolution(null);
     };
 
     const handleToggleSolutionDone = (project: Project, solutionId: string) => {
