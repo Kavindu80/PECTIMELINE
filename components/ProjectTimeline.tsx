@@ -135,16 +135,15 @@ const CutDateInput = ({
                     title="Select date"
                 >
                     <Calendar size={12} className="pointer-events-none group-hover:scale-110 transition-transform" />
-                    <input
-                        ref={dateInputRef}
-                        type="date"
-                        value={getISODate(displayValue)}
-                        onChange={handleNativePick}
-                        className="sr-only"
-                        tabIndex={-1}
-                        aria-hidden="true"
-                    />
                 </div>
+                {/* Hidden native date input - must NOT have aria-hidden or tabIndex=-1 for showPicker() to work in production browsers */}
+                <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={getISODate(displayValue)}
+                    onChange={handleNativePick}
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+                />
             </div>
         </div>
     );

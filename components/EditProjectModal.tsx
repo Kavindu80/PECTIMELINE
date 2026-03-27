@@ -99,16 +99,15 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
           title="Select date"
         >
           <Calendar size={16} className="text-blue-500 dark:text-blue-400 pointer-events-none group-hover:scale-110 transition-transform" />
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={getISODate(value)}
-            onChange={handleDatePick}
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
-          />
         </div>
+        {/* Hidden native date input - must NOT have aria-hidden or tabIndex=-1 for showPicker() to work in production browsers */}
+        <input
+          ref={dateInputRef}
+          type="date"
+          value={getISODate(value)}
+          onChange={handleDatePick}
+          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+        />
       </div>
     </div>
   );
