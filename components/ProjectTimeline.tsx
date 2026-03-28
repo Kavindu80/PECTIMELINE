@@ -107,7 +107,7 @@ const CutDateInput = ({
     return (
         <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{label}</label>
-            <div className="relative flex items-center w-full">
+            <div style={{ position: 'relative' }} className="flex items-center w-full">
                 <input
                     value={displayValue}
                     onChange={e => onChange(e.target.value)}
@@ -119,21 +119,31 @@ const CutDateInput = ({
                         } font-bold`}
                     placeholder="DD-MMM-YY"
                 />
-                {/* Calendar button with native date input overlaid — works on any domain without showPicker() */}
+                {/* Visual calendar icon (decorative only) */}
                 <div 
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-orange-500 transition-colors group cursor-pointer z-10"
-                    title="Select date"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-orange-500 transition-colors group cursor-pointer"
+                    style={{ zIndex: 10, pointerEvents: 'none' }}
                 >
-                    <Calendar size={12} className="pointer-events-none group-hover:scale-110 transition-transform" />
-                    {/* Native date input covers the entire button area — clicking anywhere on the button opens the picker */}
-                    <input
-                        type="date"
-                        value={getISODate(displayValue)}
-                        onChange={handleNativePick}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        style={{ colorScheme: 'light' }}
-                    />
+                    <Calendar size={12} className="group-hover:scale-110 transition-transform" />
                 </div>
+                {/* Invisible native date input covering the button area — triggers native picker on any browser/domain */}
+                <input
+                    type="date"
+                    value={getISODate(displayValue)}
+                    onChange={handleNativePick}
+                    title="Select date"
+                    style={{
+                        position: 'absolute',
+                        right: '4px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '24px',
+                        height: '24px',
+                        opacity: 0,
+                        cursor: 'pointer',
+                        zIndex: 20,
+                    }}
+                />
             </div>
         </div>
     );

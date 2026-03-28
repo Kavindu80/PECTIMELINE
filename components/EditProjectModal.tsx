@@ -75,7 +75,7 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
   return (
     <div className="space-y-1.5">
       <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">{label}</label>
-      <div className="relative flex items-center w-full">
+      <div style={{ position: 'relative' }} className="flex items-center w-full">
         <input
           type="text"
           placeholder="DD-MMM-YY"
@@ -83,21 +83,30 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-3 pr-11 py-2.5 bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] text-slate-800 dark:text-white font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 focus:outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700 shadow-sm"
         />
-        {/* Calendar Button with native date input overlaid — works on any domain without showPicker() */}
+        {/* Visual calendar button (decorative only) */}
         <div 
-          className="absolute right-1 top-1 bottom-1 w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 hover:border-blue-500 transition-all cursor-pointer z-30 group"
-          title="Select date"
+          className="absolute right-1 top-1 bottom-1 w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 hover:border-blue-500 transition-all cursor-pointer group"
+          style={{ zIndex: 10, pointerEvents: 'none' }}
         >
-          <Calendar size={16} className="text-blue-500 dark:text-blue-400 pointer-events-none group-hover:scale-110 transition-transform" />
-          {/* Native date input covers the entire button area — clicking anywhere on the button opens the picker */}
-          <input
-            type="date"
-            value={getISODate(value)}
-            onChange={handleDatePick}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            style={{ colorScheme: 'light' }}
-          />
+          <Calendar size={16} className="text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
         </div>
+        {/* Invisible native date input covering the button area — triggers native picker on any browser/domain */}
+        <input
+          type="date"
+          value={getISODate(value)}
+          onChange={handleDatePick}
+          title="Select date"
+          style={{
+            position: 'absolute',
+            right: '4px',
+            top: '4px',
+            bottom: '4px',
+            width: '40px',
+            opacity: 0,
+            cursor: 'pointer',
+            zIndex: 20,
+          }}
+        />
       </div>
     </div>
   );
