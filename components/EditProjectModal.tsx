@@ -304,7 +304,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isO
                 <TextInput label="Order Qty" value={formData.orderQty || 0} onChange={(val) => update('orderQty', val)} type="number" />
                 <SelectInput label="Plant" value={formData.plant} onChange={(val) => update('plant', val)} options={PLANTS} />
                 <TextInput label="Platform" value={formData.platformStyle || ''} onChange={(val) => update('platformStyle', val)} />
-                <TextInput label="Core / Not" value={formData.core || ''} onChange={(val) => update('core', val)} />
+                <SelectInput label="Core / Not" value={formData.core || ''} onChange={(val) => update('core', val)} options={['Core', 'Not Core']} />
                 <TextInput label="Term" value={formData.term || ''} onChange={(val) => update('term', val)} />
                 <DateInput label="Original Deadline" value={formData.styleDueDate} onChange={(val) => update('styleDueDate', val)} />
               </div>
