@@ -1156,7 +1156,7 @@ const App: React.FC = () => {
       {viewingProject && <ProjectDetailsModal project={viewingProject} isOpen={!!viewingProject} onClose={() => setViewingProject(null)} onEdit={setEditingProject} onDelete={handleDeleteProject} />}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 12px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 1px solid #f1f5f9; }
         .dark .custom-scrollbar::-webkit-scrollbar-track { background: #0F172A; }

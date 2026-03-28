@@ -535,7 +535,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
 
             return {
                 ...s,
-                status: newStatus,
+                status: effectiveStage === 'brainstorm' ? newStatus : s.status,
                 stageTracking: {
                     ...currentTracking,
                     [effectiveStage]: stageTracking
@@ -1490,7 +1490,14 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                         }));
                                                     }}
                                                 >
-                                                    <div className={`absolute top-5 h-0.5 bg-slate-200 dark:bg-slate-800 -z-10 ${idx === 0 ? 'left-1/2 w-1/2' : idx === TIMELINE_STAGES.length - 1 ? 'left-0 w-1/2' : 'left-0 w-full'}`} />
+                                                    <div className={`absolute top-5 h-0.5 -z-10 ${idx === 0 ? 'left-1/2 w-1/2' : idx === TIMELINE_STAGES.length - 1 ? 'left-0 w-1/2' : 'left-0 w-full'} ${
+                                                        isDone
+                                                            ? statusBaseClass.includes('bg-red') ? 'bg-red-400 dark:bg-red-600' 
+                                                            : statusBaseClass.includes('bg-yellow') ? 'bg-yellow-400 dark:bg-yellow-600'
+                                                            : 'bg-cyan-400 dark:bg-cyan-600'
+                                                        : isNext ? 'bg-gradient-to-r from-cyan-400 to-slate-200 dark:from-cyan-600 dark:to-slate-800'
+                                                        : 'bg-slate-200 dark:bg-slate-800'
+                                                    }`} />
                                                     <div
                                                         className={`w-10 h-10 rounded-full flex items-center justify-center border-4 z-10 transition-all ${isActive
                                                             ? 'bg-cyan-100 dark:bg-cyan-900 border-cyan-400 text-cyan-700 dark:text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)] ring-2 ring-cyan-300/50'
@@ -2247,7 +2254,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                 <div key={sol.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
                                                                     <div className="flex items-center justify-between mb-3">
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-black uppercase ${SOLUTION_STATUS_COLORS[sol.status]}`}>{sol.status}</span>
+                                                                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-black uppercase ${SOLUTION_STATUS_COLORS[sol.stageTracking?.[currentActiveStage]?.status || sol.status]}`}>{sol.stageTracking?.[currentActiveStage]?.status || sol.status}</span>
                                                                             <h5 className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{sol.solutionText}</h5>
                                                                         </div>
                                                                     </div>
@@ -2536,7 +2543,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                         return (
                                                                             <div key={sol.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-cyan-500/30 transition-colors">
                                                                                 <div className="flex items-center gap-2 mb-3">
-                                                                                    <span className={`px-1.5 py-0.5 rounded text-[11px] font-black uppercase ${SOLUTION_STATUS_COLORS[sol.status]}`}>{sol.status}</span>
+                                                                                    <span className={`px-1.5 py-0.5 rounded text-[11px] font-black uppercase ${SOLUTION_STATUS_COLORS[sol.stageTracking?.[currentActiveStage]?.status || sol.status]}`}>{sol.stageTracking?.[currentActiveStage]?.status || sol.status}</span>
                                                                                     <h5 className="text-[12px] font-bold text-slate-700 dark:text-slate-200 truncate">{sol.solutionText}</h5>
                                                                                 </div>
 
@@ -2669,9 +2676,48 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                         return (
                                                                             <tr key={sol.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                                                                 <td className="px-3 py-3 text-xs font-bold text-slate-700 dark:text-slate-200">{sol.solutionText}</td>
-                                                                                <td className="px-3 py-3 text-xs font-bold text-slate-600 dark:text-slate-400">{sol.operationSMV || '-'}</td>
-                                                                                <td className="px-3 py-3 text-xs font-bold text-slate-600 dark:text-slate-400">{sol.team || '-'}</td>
-                                                                                <td className="px-3 py-3 text-xs font-bold text-slate-600 dark:text-slate-400">{sol.responsible || '-'}</td>
+                                                                                <td className="px-3 py-3">
+                                                                                    {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'operationSMV' ? (
+                                                                                        <input type="text" autoFocus value={editFieldValue}
+                                                                                            onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                            onBlur={() => handleSaveSolField(project, sol.id, 'operationSMV')}
+                                                                                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'operationSMV')}
+                                                                                            className="w-full text-xs bg-white dark:bg-slate-800 border border-emerald-400 rounded px-2 py-1 outline-none" />
+                                                                                    ) : (
+                                                                                        <div onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'operationSMV' }); setEditFieldValue(sol.operationSMV || ''); }}
+                                                                                            className="text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded px-2 py-1 -mx-2 -my-1 min-h-[24px] flex items-center transition-colors">
+                                                                                            {sol.operationSMV || '-'}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="px-3 py-3">
+                                                                                    {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'team' ? (
+                                                                                        <input type="text" autoFocus value={editFieldValue}
+                                                                                            onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                            onBlur={() => handleSaveSolField(project, sol.id, 'team')}
+                                                                                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'team')}
+                                                                                            className="w-full text-xs bg-white dark:bg-slate-800 border border-emerald-400 rounded px-2 py-1 outline-none" />
+                                                                                    ) : (
+                                                                                        <div onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'team' }); setEditFieldValue(sol.team || sol.machineCode || ''); }}
+                                                                                            className="text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded px-2 py-1 -mx-2 -my-1 min-h-[24px] flex items-center transition-colors">
+                                                                                            {sol.team || sol.machineCode || '-'}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="px-3 py-3">
+                                                                                    {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'responsible' ? (
+                                                                                        <input type="text" autoFocus value={editFieldValue}
+                                                                                            onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                            onBlur={() => handleSaveSolField(project, sol.id, 'responsible')}
+                                                                                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'responsible')}
+                                                                                            className="w-full text-xs bg-white dark:bg-slate-800 border border-emerald-400 rounded px-2 py-1 outline-none" />
+                                                                                    ) : (
+                                                                                        <div onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'responsible' }); setEditFieldValue(sol.responsible || ''); }}
+                                                                                            className="text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded px-2 py-1 -mx-2 -my-1 min-h-[24px] flex items-center transition-colors">
+                                                                                            {sol.responsible || '-'}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </td>
                                                                                 <td className="px-3 py-3 text-right">
                                                                                     <button
                                                                                         onClick={() => {
@@ -2828,32 +2874,8 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                         </div>
                                                     )}
 
-                                                    {/* Stage Notes */}
-                                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><StickyNote size={10} /> Stage Notes</span>
-                                                            {editingNoteKey !== `${project.id}-valid` ? (
-                                                                <button onClick={() => {
-                                                                    setEditingNoteKey(`${project.id}-valid`);
-                                                                    let initVal = project.stageNotes?.['valid'] || '';
-                                                                    if (!initVal) { initVal = `[${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}] `; }
-                                                                    setEditNoteText(initVal);
-                                                                }}
-                                                                    className="text-[11px] text-cyan-500 hover:text-cyan-400 font-bold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-cyan-500/10 transition-colors"><Edit3 size={14} /> Edit</button>
-                                                            ) : (
-                                                                <div className="flex gap-2">
-                                                                    <button onClick={() => handleSaveStageNote(project, 'valid')} className="text-[11px] text-green-500 hover:text-green-400 font-bold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-green-500/10 transition-colors"><Save size={14} /> Save</button>
-                                                                    <button onClick={() => setEditingNoteKey(null)} className="text-[11px] text-slate-400 hover:text-slate-300 font-bold px-2 py-1 rounded-lg hover:bg-slate-500/10 transition-colors">Cancel</button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        {editingNoteKey === `${project.id}-valid` ? (
-                                                            <textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} rows={2}
-                                                                className="w-full px-3 py-2 bg-white dark:bg-[#0F172A] border border-cyan-300 dark:border-cyan-600 rounded-lg text-xs text-slate-800 dark:text-white focus:outline-none resize-none" placeholder="Validation notes..." />
-                                                        ) : (
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 italic leading-relaxed">{project.stageNotes?.['valid'] || 'No notes added.'}</p>
-                                                        )}
-                                                    </div>
+                                                    {/* Daily Notes - same as other stages */}
+                                                    {renderDailyNotesSection(project, 'valid', 'Validation')}
                                                 </div>
 
                                             ) : (
@@ -2884,7 +2906,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                 </tr></thead>
                                                                 <tbody>
                                                                     {solutions.map((sol) => {
-                                                                        const isTrialOrMockup = ['trial', 'mockup'].includes(currentActiveStage);
+                                                                        const isEditableStage = ['trial', 'mockup', 'valid'].includes(currentActiveStage);
                                                                         // CRITICAL FIX: Do NOT fallback to solution-level dates
                                                                         // Each stage must have completely independent tracking
                                                                         const stageStart = sol.stageTracking?.[currentActiveStage]?.startDate || '';
@@ -2893,29 +2915,25 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                         const stageDays = getLiveStageDays(sol, currentActiveStage);
 
                                                                         return (
-                                                                            <tr key={sol.id} className={`border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${sol.status === 'Done' ? 'opacity-70' : ''}`}>
+                                                                            <tr key={sol.id} className={`border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${(sol.stageTracking?.[currentActiveStage]?.status || 'Pending') === 'Done' ? 'opacity-70' : ''}`}>
                                                                                 <td className="px-3 py-2.5 text-xs font-bold text-cyan-700 dark:text-cyan-400 max-w-[180px]">{sol.solutionText}</td>
                                                                                 <td className="px-3 py-2.5">
-                                                                                    {isTrialOrMockup ? (
-                                                                                        editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'operationSMV' ? (
-                                                                                            <input type="text"
-                                                                                                autoFocus
-                                                                                                value={editFieldValue}
-                                                                                                onChange={(e) => setEditFieldValue(e.target.value)}
-                                                                                                onBlur={() => handleSaveSolField(project, sol.id, 'operationSMV')}
-                                                                                                onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'operationSMV')}
-                                                                                                className="w-full text-xs bg-white dark:bg-slate-800 border border-cyan-400 rounded px-2 py-1 outline-none"
-                                                                                            />
-                                                                                        ) : (
-                                                                                            <div
-                                                                                                onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'operationSMV' }); setEditFieldValue(sol.operationSMV || ''); }}
-                                                                                                className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-2 py-1 -mx-2 -my-1 transition-colors min-h-[24px] flex items-center"
-                                                                                            >
-                                                                                                {sol.operationSMV || '-'}
-                                                                                            </div>
-                                                                                        )
+                                                                                    {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'operationSMV' ? (
+                                                                                        <input type="text"
+                                                                                            autoFocus
+                                                                                            value={editFieldValue}
+                                                                                            onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                            onBlur={() => handleSaveSolField(project, sol.id, 'operationSMV')}
+                                                                                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'operationSMV')}
+                                                                                            className="w-full text-xs bg-white dark:bg-slate-800 border border-cyan-400 rounded px-2 py-1 outline-none"
+                                                                                        />
                                                                                     ) : (
-                                                                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{sol.operationSMV || '-'}</span>
+                                                                                        <div
+                                                                                            onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'operationSMV' }); setEditFieldValue(sol.operationSMV || ''); }}
+                                                                                            className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-2 py-1 -mx-2 -my-1 transition-colors min-h-[24px] flex items-center"
+                                                                                        >
+                                                                                            {sol.operationSMV || '-'}
+                                                                                        </div>
                                                                                     )}
                                                                                 </td>
                                                                                 <td className="px-3 py-2.5">
@@ -2955,7 +2973,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                                     )}
                                                                                 </td>
                                                                                 <td className="px-3 py-2.5 align-top">
-                                                                                    {isTrialOrMockup ? (
+                                                                                    {isEditableStage ? (
                                                                                         <div className="flex flex-col gap-1.5 w-[200px] max-h-[140px] overflow-y-auto custom-scrollbar pr-1">
                                                                                             {/* Render array-based daily comments filtered for this specific stage */}
                                                                                             {(sol.dailyComments || []).filter(c => (c.stageId || 'brainstorm') === currentActiveStage).map((note, idx) => (
@@ -3054,36 +3072,55 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                                     )}
                                                                                 </td>
                                                                                 <td className="px-3 py-2.5">
-                                                                                    {isTrialOrMockup ? (
-                                                                                        editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'team' ? (
-                                                                                            <input
-                                                                                                type="text"
-                                                                                                autoFocus
-                                                                                                value={editFieldValue}
-                                                                                                onChange={(e) => setEditFieldValue(e.target.value)}
-                                                                                                onBlur={() => handleSaveSolField(project, sol.id, 'team')}
-                                                                                                onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'team')}
-                                                                                                className="w-full text-xs bg-white dark:bg-slate-800 border border-cyan-400 rounded px-2 py-1 outline-none"
-                                                                                            />
-                                                                                        ) : (
-                                                                                            <div
-                                                                                                onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'team' }); setEditFieldValue(sol.team || ''); }}
-                                                                                                className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-2 py-1 -mx-2 -my-1 transition-colors min-h-[24px] flex items-center"
-                                                                                            >
-                                                                                                {sol.team || '-'}
-                                                                                            </div>
-                                                                                        )
+                                                                                    {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'team' ? (
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            autoFocus
+                                                                                            value={editFieldValue}
+                                                                                            onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                            onBlur={() => handleSaveSolField(project, sol.id, 'team')}
+                                                                                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'team')}
+                                                                                            className="w-full text-xs bg-white dark:bg-slate-800 border border-cyan-400 rounded px-2 py-1 outline-none"
+                                                                                        />
                                                                                     ) : (
-                                                                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{sol.team || '-'}</span>
+                                                                                        <div
+                                                                                            onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'team' }); setEditFieldValue(sol.team || sol.machineCode || ''); }}
+                                                                                            className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-2 py-1 -mx-2 -my-1 transition-colors min-h-[24px] flex items-center"
+                                                                                        >
+                                                                                            {sol.team || sol.machineCode || '-'}
+                                                                                        </div>
                                                                                     )}
                                                                                 </td>
                                                                                 {!['trial', 'mockup'].includes(currentActiveStage) && (
-                                                                                    <td className="px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300">{sol.responsible || '-'}</td>
+                                                                                    <td className="px-3 py-2.5">
+                                                                                        {currentActiveStage === 'valid' ? (
+                                                                                            editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'responsible' ? (
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    autoFocus
+                                                                                                    value={editFieldValue}
+                                                                                                    onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                                    onBlur={() => handleSaveSolField(project, sol.id, 'responsible')}
+                                                                                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'responsible')}
+                                                                                                    className="w-full text-xs bg-white dark:bg-slate-800 border border-cyan-400 rounded px-2 py-1 outline-none"
+                                                                                                />
+                                                                                            ) : (
+                                                                                                <div
+                                                                                                    onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'responsible' }); setEditFieldValue(sol.responsible || ''); }}
+                                                                                                    className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-2 py-1 -mx-2 -my-1 transition-colors min-h-[24px] flex items-center"
+                                                                                                >
+                                                                                                    {sol.responsible || '-'}
+                                                                                                </div>
+                                                                                            )
+                                                                                        ) : (
+                                                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{sol.responsible || '-'}</span>
+                                                                                        )}
+                                                                                    </td>
                                                                                 )}
                                                                                 <td className="px-3 py-2.5">
                                                                                     <div className="flex flex-col gap-1.5">
-                                                                                        <select value={sol.status} onChange={(e) => handleUpdateSolutionStatus(project, sol.id, e.target.value as BrainstormSolution['status'], currentActiveStage)}
-                                                                                            className={`px-2 py-1 rounded text-[10px] font-black uppercase cursor-pointer border-0 outline-none ${SOLUTION_STATUS_COLORS[sol.status]}`}>
+                                                                                        <select value={sol.stageTracking?.[currentActiveStage]?.status || 'Pending'} onChange={(e) => handleUpdateSolutionStatus(project, sol.id, e.target.value as BrainstormSolution['status'], currentActiveStage)}
+                                                                                            className={`px-2 py-1 rounded text-[10px] font-black uppercase cursor-pointer border-0 outline-none ${SOLUTION_STATUS_COLORS[sol.stageTracking?.[currentActiveStage]?.status || 'Pending']}`}>
                                                                                             <option value="Pending">Pending</option>
                                                                                             <option value="In Progress">In Progress</option>
                                                                                             <option value="Trial">Trial</option>
@@ -3113,33 +3150,38 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                         </div>
                                                     )}
 
-                                                    {/* Stage Notes for all other stages */}
-                                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><StickyNote size={10} /> Stage Notes</span>
-                                                            {editingNoteKey !== `${project.id}-${currentActiveStage}` ? (
-                                                                <button onClick={() => {
-                                                                    setEditingNoteKey(`${project.id}-${currentActiveStage}`);
-                                                                    let initVal = project.stageNotes?.[currentActiveStage] || '';
-                                                                    if (!initVal) { initVal = `[${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}] `; }
-                                                                    setEditNoteText(initVal);
-                                                                }}
-                                                                    className="text-[11px] text-cyan-500 hover:text-cyan-400 font-bold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-cyan-500/10 transition-colors"><Edit3 size={14} /> Edit</button>
-                                                            ) : (
-                                                                <div className="flex gap-2">
-                                                                    <button onClick={() => handleSaveStageNote(project, currentActiveStage)} className="text-[11px] text-green-500 hover:text-green-400 font-bold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-green-500/10 transition-colors"><Save size={14} /> Save</button>
-                                                                    <button onClick={() => setEditingNoteKey(null)} className="text-[11px] text-slate-400 hover:text-slate-300 font-bold px-2 py-1 rounded-lg hover:bg-slate-500/10 transition-colors">Cancel</button>
+                                                    {/* Daily Notes for Trial/Mockup/Valid; Stage Notes for other stages */}
+                                                    {['trial', 'mockup', 'valid'].includes(currentActiveStage)
+                                                        ? renderDailyNotesSection(project, currentActiveStage, TIMELINE_STAGES.find(s => s.id === currentActiveStage)?.label || currentActiveStage)
+                                                        : (
+                                                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><StickyNote size={10} /> Stage Notes</span>
+                                                                    {editingNoteKey !== `${project.id}-${currentActiveStage}` ? (
+                                                                        <button onClick={() => {
+                                                                            setEditingNoteKey(`${project.id}-${currentActiveStage}`);
+                                                                            let initVal = project.stageNotes?.[currentActiveStage] || '';
+                                                                            if (!initVal) { initVal = `[${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}] `; }
+                                                                            setEditNoteText(initVal);
+                                                                        }}
+                                                                            className="text-[11px] text-cyan-500 hover:text-cyan-400 font-bold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-cyan-500/10 transition-colors"><Edit3 size={14} /> Edit</button>
+                                                                    ) : (
+                                                                        <div className="flex gap-2">
+                                                                            <button onClick={() => handleSaveStageNote(project, currentActiveStage)} className="text-[11px] text-green-500 hover:text-green-400 font-bold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-green-500/10 transition-colors"><Save size={14} /> Save</button>
+                                                                            <button onClick={() => setEditingNoteKey(null)} className="text-[11px] text-slate-400 hover:text-slate-300 font-bold px-2 py-1 rounded-lg hover:bg-slate-500/10 transition-colors">Cancel</button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                        {editingNoteKey === `${project.id}-${currentActiveStage}` ? (
-                                                            <textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} rows={2}
-                                                                className="w-full px-3 py-2 bg-white dark:bg-[#0F172A] border border-cyan-300 dark:border-cyan-600 rounded-lg text-xs text-slate-800 dark:text-white focus:outline-none resize-none"
-                                                                placeholder={`Add notes for ${TIMELINE_STAGES.find(s => s.id === currentActiveStage)?.label} stage...`} />
-                                                        ) : (
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 italic leading-relaxed">{project.stageNotes?.[currentActiveStage] || 'No notes added.'}</p>
-                                                        )}
-                                                    </div>
+                                                                {editingNoteKey === `${project.id}-${currentActiveStage}` ? (
+                                                                    <textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} rows={2}
+                                                                        className="w-full px-3 py-2 bg-white dark:bg-[#0F172A] border border-cyan-300 dark:border-cyan-600 rounded-lg text-xs text-slate-800 dark:text-white focus:outline-none resize-none"
+                                                                        placeholder={`Add notes for ${TIMELINE_STAGES.find(s => s.id === currentActiveStage)?.label} stage...`} />
+                                                                ) : (
+                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 italic leading-relaxed">{project.stageNotes?.[currentActiveStage] || 'No notes added.'}</p>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    }
                                                 </div>
                                             )}
                                         </div>
