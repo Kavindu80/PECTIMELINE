@@ -93,6 +93,7 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
         {/* Invisible native date input covering the button area — triggers native picker on any browser/domain */}
         <input
           type="date"
+          className="date-picker-trigger"
           value={getISODate(value)}
           onChange={handleDatePick}
           title="Select date"

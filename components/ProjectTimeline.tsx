@@ -129,6 +129,7 @@ const CutDateInput = ({
                 {/* Invisible native date input covering the button area — triggers native picker on any browser/domain */}
                 <input
                     type="date"
+                    className="date-picker-trigger"
                     value={getISODate(displayValue)}
                     onChange={handleNativePick}
                     title="Select date"

@@ -1162,6 +1162,22 @@ const App: React.FC = () => {
         .dark .custom-scrollbar::-webkit-scrollbar-track { background: #0F172A; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border: 1px solid #1e293b; }
         
+        /* GLOBAL DATE PICKER FIX: Expand the tiny native calendar trigger to fill the entire input */
+        .date-picker-trigger::-webkit-calendar-picker-indicator {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          color: transparent;
+          background: transparent;
+          cursor: pointer;
+        }
+
         @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         
