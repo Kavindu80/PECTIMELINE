@@ -91,8 +91,6 @@ const CutDateInput = ({
     onEnter: () => void,
     onDatePick: (val: string) => void
 }) => {
-    const dateInputRef = useRef<HTMLInputElement>(null);
-
     // Use plan date as default if no value exists
     const displayValue = value || plan || '';
 
@@ -121,29 +119,21 @@ const CutDateInput = ({
                         } font-bold`}
                     placeholder="DD-MMM-YY"
                 />
+                {/* Calendar button with native date input overlaid — works on any domain without showPicker() */}
                 <div 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        try {
-                            dateInputRef.current?.showPicker();
-                        } catch (err) {
-                            dateInputRef.current?.click();
-                        }
-                    }}
                     className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-orange-500 transition-colors group cursor-pointer z-10"
                     title="Select date"
                 >
                     <Calendar size={12} className="pointer-events-none group-hover:scale-110 transition-transform" />
+                    {/* Native date input covers the entire button area — clicking anywhere on the button opens the picker */}
+                    <input
+                        type="date"
+                        value={getISODate(displayValue)}
+                        onChange={handleNativePick}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        style={{ colorScheme: 'light' }}
+                    />
                 </div>
-                {/* Hidden native date input - must NOT have aria-hidden or tabIndex=-1 for showPicker() to work in production browsers */}
-                <input
-                    ref={dateInputRef}
-                    type="date"
-                    value={getISODate(displayValue)}
-                    onChange={handleNativePick}
-                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
-                />
             </div>
         </div>
     );

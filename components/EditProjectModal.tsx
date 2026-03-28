@@ -57,7 +57,6 @@ const getISODate = (displayDate: string) => {
 };
 
 const DateInput = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => {
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const handleDatePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value; // YYYY-MM-DD
@@ -84,30 +83,21 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-3 pr-11 py-2.5 bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] text-slate-800 dark:text-white font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 focus:outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700 shadow-sm"
         />
-        {/* Visible Calendar Button - Click captures interaction and opens picker */}
+        {/* Calendar Button with native date input overlaid — works on any domain without showPicker() */}
         <div 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-              dateInputRef.current?.showPicker();
-            } catch (err) {
-              dateInputRef.current?.click();
-            }
-          }}
           className="absolute right-1 top-1 bottom-1 w-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 hover:border-blue-500 transition-all cursor-pointer z-30 group"
           title="Select date"
         >
           <Calendar size={16} className="text-blue-500 dark:text-blue-400 pointer-events-none group-hover:scale-110 transition-transform" />
+          {/* Native date input covers the entire button area — clicking anywhere on the button opens the picker */}
+          <input
+            type="date"
+            value={getISODate(value)}
+            onChange={handleDatePick}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            style={{ colorScheme: 'light' }}
+          />
         </div>
-        {/* Hidden native date input - must NOT have aria-hidden or tabIndex=-1 for showPicker() to work in production browsers */}
-        <input
-          ref={dateInputRef}
-          type="date"
-          value={getISODate(value)}
-          onChange={handleDatePick}
-          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
-        />
       </div>
     </div>
   );
