@@ -264,6 +264,46 @@ const isStageActuallyCompleted = (project: Project, stageId: string): boolean =>
     }
 };
 
+// Helper function to check if a stage has been started (has planned date or any partial work)
+const isStageStarted = (project: Project, stageId: string): boolean => {
+    // Check if there's a planned date for this stage
+    const stageConfig = TIMELINE_STAGES.find(s => s.id === stageId);
+    const plannedDate = stageConfig ? (project[stageConfig.dateKey as keyof Project] as string) : '';
+    if (plannedDate) return true;
+
+    switch (stageId) {
+        case 'cut_check': {
+            const actuals = project.cutActuals || {};
+            // Check if any cut dates are set or any cut actuals exist
+            return !!(project.cutRequestedDate || project.cutRequiredDate || project.cutReceivedDate || project.cutHandoverDate ||
+                actuals.requested || actuals.required || actuals.received || actuals.handover);
+        }
+        case 'brainstorm':
+            return (project.solutions || []).some(s =>
+                !!(s.stageTracking?.['brainstorm']?.startDate || s.stageTracking?.['brainstorm']?.actualDate ||
+                    s.startDate || s.actualEndDate || s.status === 'In Progress' || s.status === 'Done')
+            );
+        case 'mach_avail':
+            return (project.solutions || []).some(s => !!(s.actualMachineDate || (s.machines && s.machines.length > 0)));
+        case 'trial':
+        case 'mockup':
+        case 'valid':
+        case 'video':
+            return (project.solutions || []).some(sol =>
+                !!(sol.stageTracking?.[stageId]?.startDate || sol.stageTracking?.[stageId]?.actualDate ||
+                    sol.stageTracking?.[stageId]?.status === 'In Progress' || sol.stageTracking?.[stageId]?.status === 'Done')
+            );
+        case 'stw':
+        case 'mds':
+        case 'pd':
+            return (project.stageFiles || []).some(f => f.stageId === stageId);
+        case 'share':
+            return !!(project.seSignoffDate || project.initialSmv || project.latestSmv);
+        default:
+            return false;
+    }
+};
+
 
 
 // Helper function to add weekdays (excluding weekends)
@@ -1036,7 +1076,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                     {TIMELINE_STAGES.map((stage, idx) => {
                                         const isCompleted = isStageActuallyCompleted(project, stage.id);
                                         return (
-                                            <div key={idx} className={`flex-1 rounded-full ${isCompleted ? 'bg-cyan-500' : 'bg-red-600 dark:bg-red-600'}`} />
+                                            <div key={idx} className={`flex-1 rounded-full ${isCompleted ? 'bg-cyan-500' : isStageStarted(project, stage.id) ? 'bg-red-600 dark:bg-red-600' : 'bg-slate-300 dark:bg-slate-600'}`} />
                                         );
                                     })}
                                 </div>
@@ -1117,7 +1157,8 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                     <div
                                                         className={`h-1.5 flex-1 rounded-full mr-1 transition-colors ${isDone
                                                             ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]'
-                                                            : 'bg-red-600 dark:bg-red-600 border border-red-500/50'
+                                                            : isStageStarted(project, stage.id) ? 'bg-red-600 dark:bg-red-600 border border-red-500/50'
+                                                            : 'bg-slate-300 dark:bg-slate-600 border border-slate-400/30 dark:border-slate-500/30'
                                                             }`}
                                                     />
                                                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] bg-slate-900 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none border border-slate-700 shadow-xl">
@@ -1269,9 +1310,12 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                             const isNext = !isDone && (idx === 0 || isStageActuallyCompleted(project, TIMELINE_STAGES[idx - 1].id));
                                             const isActive = currentActiveStage === stage.id;
 
+                                            const stageHasStarted = isStageStarted(project, stage.id);
                                             let statusBaseClass = isDone
                                                 ? 'bg-white dark:bg-[#1E293B] border-cyan-500 text-cyan-600 dark:text-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                                                : 'bg-white dark:bg-[#1E293B] border-red-500 dark:border-red-600 text-red-500 dark:text-red-400';
+                                                : stageHasStarted
+                                                    ? 'bg-white dark:bg-[#1E293B] border-red-500 dark:border-red-600 text-red-500 dark:text-red-400'
+                                                    : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500';
 
                                             // Custom Logic for Cut Check Stage
                                             if (stage.id === 'cut_check') {
@@ -1496,14 +1540,17 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                             : statusBaseClass.includes('bg-yellow') ? 'bg-yellow-400 dark:bg-yellow-600'
                                                             : 'bg-cyan-400 dark:bg-cyan-600'
                                                         : isNext ? 'bg-gradient-to-r from-cyan-400 to-slate-200 dark:from-cyan-600 dark:to-slate-800'
-                                                        : 'bg-slate-200 dark:bg-slate-800'
+                                                        : stageHasStarted ? 'bg-red-200 dark:bg-red-900/30'
+                                                        : 'bg-slate-200 dark:bg-slate-700'
                                                     }`} />
                                                     <div
                                                         className={`w-10 h-10 rounded-full flex items-center justify-center border-4 z-10 transition-all ${isActive
                                                             ? 'bg-cyan-100 dark:bg-cyan-900 border-cyan-400 text-cyan-700 dark:text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)] ring-2 ring-cyan-300/50'
                                                             : isNext
                                                                 ? 'bg-red-50 dark:bg-red-900 border-red-500 text-red-600 dark:text-red-200 animate-pulse'
-                                                                : statusBaseClass
+                                                                : !stageHasStarted && !isDone
+                                                                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500'
+                                                                    : statusBaseClass
                                                             }`}
                                                     >
                                                         <stage.icon size={18} />
