@@ -10,7 +10,7 @@ import { DurationDisplay } from './DurationDisplay';
 import {
     ChevronRight, Calendar, Trash2, ChevronDown, History, Send, ArrowRightLeft,
     Plus, Check, X, Lightbulb, Clock, AlertCircle, AlertTriangle, Video, Link2, ExternalLink,
-    Package, Edit3, Save, FileText, StickyNote, Paperclip, Upload, FileSpreadsheet, Share2, Wrench, CheckCircle2, PenTool, Printer, BarChart3, Award, Layout
+    Package, Edit3, Save, FileText, StickyNote, Paperclip, Upload, FileSpreadsheet, Share2, Wrenc, PenTool, Printer, BarChart3, Award, Layout
 } from 'lucide-react';
 import { calculateBusinessDays, parseDisplayDate } from '../utils/durationCalculator';
 
