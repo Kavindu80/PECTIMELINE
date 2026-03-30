@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Project, BrainstormSolution, CutKitItem, StageFileLink, SolutionMachine, CutActuals, StageDates } from '../types';
 
 import { PLANT_COLORS, TIMELINE_STAGES } from '../constants';
-// import { SolutionFeedbackSheet } from './SolutionFeedbackSheet'; // Deprecated
+// import { SolutionFeedbackSheet } from './SolutionFeedbackSheet'; // Deprecated ok
 import { pdf } from '@react-pdf/renderer';
 import { SolutionFeedbackPDF } from './SolutionFeedbackPDF';
 import { DurationDisplay } from './DurationDisplay';
