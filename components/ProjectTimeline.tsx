@@ -3,14 +3,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Project, BrainstormSolution, CutKitItem, StageFileLink, SolutionMachine, CutActuals, StageDates } from '../types';
 
 import { PLANT_COLORS, TIMELINE_STAGES } from '../constants';
-// import { SolutionFeedbackSheet } from './SolutionFeedbackSheet'; // Deprecated ok
+// import { SolutionFeedbackSheet } from './SolutionFeedbackSheet'; // Deprecated
 import { pdf } from '@react-pdf/renderer';
 import { SolutionFeedbackPDF } from './SolutionFeedbackPDF';
 import { DurationDisplay } from './DurationDisplay';
 import {
     ChevronRight, Calendar, Trash2, ChevronDown, History, Send, ArrowRightLeft,
     Plus, Check, X, Lightbulb, Clock, AlertCircle, AlertTriangle, Video, Link2, ExternalLink,
-    Package, Edit3, Save, FileText, StickyNote, Paperclip, Upload, FileSpreadsheet, Share2, Wrenc, PenTool, Printer, BarChart3, Award, Layout
+    Package, Edit3, Save, FileText, StickyNote, Paperclip, Upload, FileSpreadsheet, Share2, Wrench, CheckCircle2, PenTool, Printer, BarChart3, Award, Layout
 } from 'lucide-react';
 import { calculateBusinessDays, parseDisplayDate } from '../utils/durationCalculator';
 
@@ -1690,6 +1690,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                         <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Solution</th>
                                                                         <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Operation</th>
                                                                         <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Mechanic</th>
+                                                                        <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Machine Code</th>
                                                                         <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">SMV Saving</th>
                                                                         <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Expected SMV</th>
                                                                         <th className="px-3 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Routed SMV</th>
@@ -1754,7 +1755,29 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                                 )}
                                                                             </td>
 
-                                                                            {/* Mechanic (Machine) - Editable */}
+                                                                            {/* Mechanic - Editable */}
+                                                                            <td className="px-3 py-2.5">
+                                                                                {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'team' ? (
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        autoFocus
+                                                                                        value={editFieldValue}
+                                                                                        onChange={(e) => setEditFieldValue(e.target.value)}
+                                                                                        onBlur={() => handleSaveSolField(project, sol.id, 'team')}
+                                                                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'team')}
+                                                                                        className="w-full text-xs bg-white dark:bg-slate-800 border border-cyan-400 rounded px-2 py-1 outline-none"
+                                                                                    />
+                                                                                ) : (
+                                                                                    <div
+                                                                                        onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'team' }); setEditFieldValue(sol.team || ''); }}
+                                                                                        className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 rounded px-2 py-1 -mx-2 -my-1 transition-colors min-h-[24px] flex items-center"
+                                                                                    >
+                                                                                        {sol.team || '-'}
+                                                                                    </div>
+                                                                                )}
+                                                                            </td>
+
+                                                                            {/* Machine Code - Editable */}
                                                                             <td className="px-3 py-2.5">
                                                                                 {editingSolField?.projId === project.id && editingSolField?.solId === sol.id && editingSolField?.field === 'machineCode' ? (
                                                                                     <input
@@ -2745,9 +2768,9 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
                                                                                             onKeyDown={(e) => e.key === 'Enter' && handleSaveSolField(project, sol.id, 'team')}
                                                                                             className="w-full text-xs bg-white dark:bg-slate-800 border border-emerald-400 rounded px-2 py-1 outline-none" />
                                                                                     ) : (
-                                                                                        <div onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'team' }); setEditFieldValue(sol.team || sol.machineCode || ''); }}
+                                                                                        <div onClick={() => { setEditingSolField({ projId: project.id, solId: sol.id, field: 'team' }); setEditFieldValue(sol.team || ''); }}
                                                                                             className="text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded px-2 py-1 -mx-2 -my-1 min-h-[24px] flex items-center transition-colors">
-                                                                                            {sol.team || sol.machineCode || '-'}
+                                                                                            {sol.team || '-'}
                                                                                         </div>
                                                                                     )}
                                                                                 </td>
@@ -3382,3 +3405,4 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = React.memo(({
         </div >
     );
 });
+
